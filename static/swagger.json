@@ -1,0 +1,162 @@
+
+{
+    "openapi": "3.0.0",
+    "info": {
+      "title": "Customer complaint detector",
+      "description": "API for checking complaints given by the customers",
+      "version": "1.0.0"
+    },
+    "servers": [
+      {
+        "url": "http://127.0.0.1:4001",
+        "description": "Local server for development"
+      }
+    ],
+    "paths": {
+      "/api/metadata": {
+        "post": {
+          "summary": "Get all the metadata of an image if available",
+          "description": "Upload an image file, and the API will extract all the metadata of the image and store it to a database",
+          "tags": [
+            "Customer complaint detector API"
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string",
+                      "format": "binary",
+                      "description": "The document image whose metadata is to be extracted"
+                    }
+                  },
+                  "required": [
+                    "file"
+                  ]
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful responses",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "metadata": {
+                        "type": "string",
+                        "description": "contains metadata tag and value"
+                      }
+                    }
+                  },
+                  "examples": {
+                    "metadata found": {
+                      "summary": "Example output for metadata found",
+                      "value": {
+                        "metadata tags": "metadata values",
+                        "_id": "id",
+                        "image_name": "name of the image"
+                      }
+                    },
+                    "metadata not found": {
+                      "summary": "Example output for metadata not found",
+                      "value": {
+                        "message": "This file doesn't contain any metadata",
+                        "_id": "id",
+                        "image_name": "name of the image"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid request (e.g., missing file or unsupported document type)",
+              "content": {
+                "application/json": {
+                  "examples": {
+                    "No file part": {
+                      "summary": "Example output for No file part",
+                      "value": {
+                        "error": true,
+                        "message": "No file part in the request"
+                      }
+                    },
+                    "No selected file": {
+                      "summary": "Example output for No selected file",
+                      "value": {
+                        "error": true,
+                        "message": "No selected file"
+                      }
+                    },
+                    "Unsupported file": {
+                      "summary": "Example output for Unsupported file",
+                      "value": {
+                        "error": true,
+                        "message": "Unsupported file type. Please upload a supported image file."
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Authentication error",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "error": true,
+                    "message": "Unauthorized access"
+                  }
+                }
+              }
+            },
+            "404": {
+              "description": "URL not found",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "error": true,
+                    "message": "URL not found"
+                  }
+                }
+              }
+            },
+            "405": {
+              "description": "method not allowed",
+              "content": {
+                "application/json": {
+                  "example": {
+                    "error": true,
+                    "message": "method not allowed"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error"
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "ApiKeyAuth": {
+          "type": "apiKey",
+          "name": "X-API-KEY",
+          "in": "header"
+        }
+      }
+    },
+    "security": [
+      {
+        "ApiKeyAuth": []
+      }
+    ]
+  }
