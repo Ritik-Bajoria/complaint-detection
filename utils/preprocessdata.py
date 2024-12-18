@@ -72,3 +72,10 @@ def apply_lemmatizer(text):
         lemmatized_words = [token.lemma_ for token in doc]
         return ' '.join(lemmatized_words)
     return text
+
+def pos_tagging(text):
+    if isinstance(text, str):
+        doc = nlp(text)
+        pos_tags = [f"{token} {spacy.explain(token.pos_)}" for token in doc if token.pos_ not in ["SPACE","X","PUNCT"]]
+        return ' | '.join(pos_tags)
+    return text

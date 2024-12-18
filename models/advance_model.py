@@ -10,6 +10,10 @@ from autocorrect import Speller
 # Create an instance of the Porterstemmer
 stemmer = PorterStemmer()
 
+# Adjust display width to show full rows
+pd.set_option('display.width', None)  # None means no width limit
+pd.set_option('display.max_colwidth', None)  # Show full column content
+
 # Create an instance of Speller
 spell = Speller(lang='en')
 
@@ -70,7 +74,7 @@ def correct_spell(text):
         words = text.split()
         corrected_words = [spell(word) for word in words]
         return ' '.join(corrected_words)
-    return 
+    return text
     
 def apply_lemmatizer(text):
     if isinstance(text, str):
@@ -79,8 +83,14 @@ def apply_lemmatizer(text):
         return ' '.join(lemmatized_words)
     return text
 
-print("original sentence\t\t",data[text_column][200])
+def pos_tagging(text):
+    if isinstance(text, str):
+        doc = nlp(text)
+        pos_tags = [f"{token} {spacy.explain(token.pos_)}" for token in doc if token.pos_ not in ["SPACE","X","PUNCT"]]
+        return ' | '.join(pos_tags)
+    return text
 
+print("original sentence\t\t",data[text_column][200])
 # Apply pre-processing functions to the text column
 data[text_column] = data[text_column].apply(clean_text)
 # print("cleaned text\t\t",data[text_column][200])
@@ -92,4 +102,8 @@ data[text_column] = data[text_column].apply(correct_spell)
 # print("spell corrected\t\t\t",data[text_column][200])
 data[text_column] = data[text_column].apply(apply_lemmatizer)
 # print("words lemmatized\t\t",data[text_column][200])
+
+# create a new column in the dataframe containing POS (Part of Speech) tagging
+data["pos_column"] = data[text_column].apply(pos_tagging)
+# print("pos tagged\t\t\t",data["pos_column"][200])
 
