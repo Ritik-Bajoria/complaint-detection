@@ -6,6 +6,12 @@ from nltk.corpus import stopwords
 from nltk.data import find
 from nltk.stem import PorterStemmer
 from autocorrect import Speller
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+from sklearn.pipeline import Pipeline
+from joblib import dump
 
 # Create an instance of the Porterstemmer
 stemmer = PorterStemmer()
@@ -103,7 +109,73 @@ data[text_column] = data[text_column].apply(correct_spell)
 data[text_column] = data[text_column].apply(apply_lemmatizer)
 # print("words lemmatized\t\t",data[text_column][200])
 
-# create a new column in the dataframe containing POS (Part of Speech) tagging
+# create a new column in the dataframe to hold POS (Part of Speech) taggings 
+# for each word in format {word} {POS Tag} | {word} {POS Tag}
 data["pos_column"] = data[text_column].apply(pos_tagging)
 # print("pos tagged\t\t\t",data["pos_column"][200])
+
+# split data for training and testing
+X_train, X_test, y_train, y_test = train_test_split(data[text_column], data['label'], test_size=0.2, random_state=10)
+
+# initialize vectorizer
+vectorizer = CountVectorizer()
+# fit the vectorizer to the training data and transform training data
+X_train_count = vectorizer.fit_transform(X_train.values)
+
+# initialize model
+model = MultinomialNB()
+# train the model
+model.fit(X_train_count, y_train)
+
+# saving the model and vectorizer 
+dump(model,"MultinomialNB_BOW_model.joblib")
+dump(vectorizer, "count_vectorizer.joblib")
+
+# testing the model
+X_test_count = vectorizer.transform(X_test)
+y_pred = model.predict(X_test_count)
+
+# show testing results
+print(classification_report(y_test,y_pred))
+
+# making above model can simply be done using this pipeline too
+# pipe = Pipeline([
+#     ('vect', CountVectorizer()),
+#     ('clf', MultinomialNB())
+# ])
+# pipe.fit(X_train,y_train)
+# print(classification_report(y_test, pipe.predict(X_test)))
+
+# testing using lists
+complaints = [
+    "The product was missing several parts when delivered.",
+    "I was billed for a service I never subscribed to.",
+    "The website crashes every time I try to place an order.",
+    "Customer service never responded to my refund request.",
+    "The delivery person was rude and unprofessional."
+]
+non_complaints = [
+    "The product quality exceeded my expectations.",
+    "I received my order on time, perfectly packed.",
+    "The support team was friendly and very helpful.",
+    "I am impressed with how easy it was to navigate your website.",
+    "Thank you for resolving my issue so quickly."
+]
+# pre-process the lists
+complaints = apply_lemmatizer(correct_spell(apply_stemmer(remove_stopwords(clean_text(complaints)))))
+non_complaints = apply_lemmatizer(correct_spell(apply_stemmer(remove_stopwords(clean_text(non_complaints)))))
+
+# vectorize the lists
+complaints_count = vectorizer.transform(complaints)
+non_complaints_count = vectorizer.transform(non_complaints)
+
+# make predictions for the lists
+complaint_predictions = model.predict(complaints_count)
+non_complaint_predictions = model.predict(non_complaints_count)
+
+# print the predictions 
+for prediction in complaint_predictions:
+    print("complaint" if prediction == 1 else "non_complaint")  
+for prediction in non_complaint_predictions:
+    print("complaint" if prediction == 1 else "non_complaint")
 
