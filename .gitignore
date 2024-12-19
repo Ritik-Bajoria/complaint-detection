@@ -4,3 +4,6 @@ Database/*.csv
 *.joblib
 myenv
 *.log
+models/__pycache__
+utils/__pycache__
+__pycache__
