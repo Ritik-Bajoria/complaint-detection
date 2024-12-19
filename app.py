@@ -7,7 +7,6 @@ from utils.logger import Logger
 from utils.preprocessdata import *
 from utils.classification import classify
 from flask_swagger_ui import get_swaggerui_blueprint
-from models import update_existing_model
 
 # initialize flask app
 app = Flask(__name__)
@@ -80,9 +79,6 @@ def complaint_detector():
 
         # classify as complaint or non-complaint
         classification = classify(text)
-
-        # update model after each request
-        update_existing_model(text)
 
         return jsonify({
             "classification":classification
