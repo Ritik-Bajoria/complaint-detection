@@ -102,7 +102,7 @@ def pos_tagging(text):
         return ' | '.join(pos_tags)
     return text
 
-print("original sentence\t\t",data[text_column][200])
+# print("original sentence\t\t",data[text_column][200])
 # Apply pre-processing functions to the text column
 data[text_column] = data[text_column].apply(clean_text)
 # print("cleaned text\t\t",data[text_column][200])
