@@ -2,6 +2,8 @@
 Database/*.csv
 !Database/complaints_processed.csv
 *.joblib
+!MultinomialNB_BOW_model.joblib
+!count_vectorizer.joblib
 myenv
 *.log
 models/__pycache__

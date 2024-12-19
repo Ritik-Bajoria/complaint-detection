@@ -14,7 +14,7 @@ CORS(app)
 
 # get the api key
 API_KEY = os.getenv('API_KEY')
-
+print(API_KEY)
 # create logger instance
 logger=Logger()
 
@@ -119,5 +119,5 @@ signal.signal(signal.SIGTERM, graceful_shutdown)
 if __name__ == '__main__':
     host = os.getenv('HOST')
     port = os.getenv('PORT')
+    print(port)
     app.run(debug=True,host=host,port=port)
-    logger.infot(f"server is listenting at {host}:{port}")
