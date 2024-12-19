@@ -2,3 +2,5 @@
 Database/*.csv
 !Database/complaints_processed.csv
 *.joblib
+myenv
+*.log

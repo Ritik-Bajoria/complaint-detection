@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 import spacy
+from spacy.cli import download
 import nltk
 from nltk.corpus import stopwords
 from nltk.data import find
@@ -23,8 +24,13 @@ pd.set_option('display.max_colwidth', None)  # Show full column content
 # Create an instance of Speller
 spell = Speller(lang='en')
 
-# initialize nlp pipeline
-nlp = spacy.load("en_core_web_sm")
+# Check if the model is already installed, otherwise install it
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    print("Downloading en_core_web_sm...")
+    download("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
 
 # custom changes to nlp pipelines
 ar = nlp.get_pipe('attribute_ruler')
@@ -132,6 +138,8 @@ dump(model,"MultinomialNB_BOW_model.joblib")
 dump(vectorizer, "count_vectorizer.joblib")
 
 # testing the model
+print("type", type(X_test))
+print(X_test)
 X_test_count = vectorizer.transform(X_test)
 y_pred = model.predict(X_test_count)
 

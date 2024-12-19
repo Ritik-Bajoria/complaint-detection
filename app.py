@@ -1,8 +1,11 @@
-from flask import flask, jsonify, request
+from flask import Flask, jsonify, request
 import os
 import signal
+import sys
 from flask_cors import CORS
 from utils.logger import Logger
+from utils.preprocessdata import *
+from utils.classification import classify
 from flask_swagger_ui import get_swaggerui_blueprint
 
 # initialize flask app
@@ -57,7 +60,30 @@ def complaint_detector():
             "message": "Unauthorized access"
         }), 401
     try:
-    
+        # Get the text to be checked from the request
+        if 'text' not in request.form:
+            return jsonify({
+                "error": True,
+                'message': 'No text in the request'
+                }), 400
+        
+        # load text to a variable
+        text = request.form['text']
+
+        # preprocess text
+        text = clean_text(text)
+        text = remove_stopwords(text)
+        text = apply_stemmer(text)
+        text = correct_spell(text)
+        text = apply_lemmatizer(text)
+
+        # classify as complaint or non-complaint
+        classification = classify(text)
+
+        return jsonify({
+            "classification":classification
+        }), 200
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -93,5 +119,5 @@ signal.signal(signal.SIGTERM, graceful_shutdown)
 if __name__ == '__main__':
     host = os.getenv('HOST')
     port = os.getenv('PORT')
-    app.run(debug=true,host=host,port=port)
+    app.run(debug=True,host=host,port=port)
     logger.infot(f"server is listenting at {host}:{port}")

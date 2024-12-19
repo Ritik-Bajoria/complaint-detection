@@ -13,8 +13,13 @@ stemmer = PorterStemmer()
 # Create an instance of Speller
 spell = Speller(lang='en')
 
-# initialize nlp pipeline
-nlp = spacy.load("en_core_web_sm")
+# Check if the model is already installed, otherwise install it
+try:
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    print("Downloading en_core_web_sm...")
+    download("en_core_web_sm")
+    nlp = spacy.load("en_core_web_sm")
 
 # custom changes to nlp pipelines
 ar = nlp.get_pipe('attribute_ruler')
