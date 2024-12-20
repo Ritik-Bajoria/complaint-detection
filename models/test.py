@@ -1,19 +1,18 @@
-# Import libraries
-import numpy as np # to work with numpy arrays and vectors
-import pandas as pd # pandas to work with excel data as data frames
-import re
-import spacy
-from spacy.cli import download
+from joblib import load, dump
+import pandas as pd
 import nltk
-from nltk.corpus import stopwords
-from nltk.data import find
+import re
 from nltk.stem import PorterStemmer
 from autocorrect import Speller
-from sklearn.feature_extraction.text import TfidfVectorizer
+import spacy
+from spacy.cli import download
+from nltk.corpus import stopwords
+from nltk.data import find
 from sklearn.model_selection import train_test_split 
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report, roc_curve, auc
-from joblib import dump, load
+
+# Load the existing model and vectorizer
+model = load("./MultinomialNB_BOW_model.joblib")
+vectorizer = load("./count_vectorizer.joblib")
 
 # Create an instance of the Porterstemmer
 stemmer = PorterStemmer()
@@ -30,6 +29,7 @@ try:
     nlp = spacy.load("en_core_web_sm")
 except OSError:
     print("Downloading en_core_web_sm...")
+    
     download("en_core_web_sm")
     nlp = spacy.load("en_core_web_sm")
 
@@ -47,14 +47,13 @@ except LookupError:
     nltk.download('stopwords')
 
 # Load the dataset to be used 
-data = pd.read_csv('C:/Users/Legion/Ritik/Desktop/Programming/Intern work/07-Intern/complaint detector/Database/mydata.csv')
+data = pd.read_csv('Database/newdata.csv')
 
 # Preprocess the text data to numerical data
 data['label'] = data['label'].map({'complaint': 1, 'non-complaint': 0})
 
 # Identify text column
 text_column = 'text' 
-
 
 # Text preprocessing function
 def clean_text(text):
@@ -103,44 +102,7 @@ def pos_tagging(text):
         pos_tags = [f"{token} {spacy.explain(token.pos_)}" for token in doc if token.pos_ not in ["SPACE","X","PUNCT"]]
         return ' | '.join(pos_tags)
     return text
-
-# print("original sentence\t\t",data[text_column][200])
-# Apply pre-processing functions to the text column
-data[text_column] = data[text_column].apply(clean_text)
-# print("cleaned text\t\t",data[text_column][200])
-data[text_column] = data[text_column].apply(remove_stopwords)
-# print("stopwords removed\t\t",data[text_column][200])
-data[text_column] = data[text_column].apply(apply_stemmer)
-# print("words stemmed\t\t\t",data[text_column][200])
-data[text_column] = data[text_column].apply(correct_spell)
-# print("spell corrected\t\t\t",data[text_column][200])
-data[text_column] = data[text_column].apply(apply_lemmatizer)
-# print("words lemmatized\t\t",data[text_column][200])
-
-# splitting data for training and for testing  in 8:2 ratio
-X_train, X_test, y_train, y_test = train_test_split(data[text_column], data['label'], test_size=0.2)
-
-# Convert text into numerical features using TF-IDF
-vectorizer = TfidfVectorizer()
-X_train_tfidf = vectorizer.fit_transform(X_train)  # Convert training text to numeric features
-
-# Train Logistic Regression model
-model = LogisticRegression()
-model.fit(X_train_tfidf, y_train)
-
-# Save the model and vectorizer
-model_file_path = 'logistic_regression_model.joblib'
-vectorizer_file_path = 'tfidf_vectorizer.joblib'
-dump(model, model_file_path)
-dump(vectorizer, vectorizer_file_path)
-
-# Predict on test data
-X_test_tfidf = vectorizer.transform(X_test)  # Transform test data into numeric features
-y_pred = model.predict(X_test_tfidf)
-
-# Evaluate the model
-print(classification_report(y_test, y_pred))
-
+    
 # testing using lists
 complaints = [
     "The product was missing several parts when delivered.",
@@ -157,8 +119,8 @@ non_complaints = [
     "Thank you for resolving my issue so quickly."
 ]
 # pre-process the lists
-# complaints = apply_lemmatizer(correct_spell(apply_stemmer(remove_stopwords(clean_text(complaints)))))
-# non_complaints = apply_lemmatizer(correct_spell(apply_stemmer(remove_stopwords(clean_text(non_complaints)))))
+complaints = apply_lemmatizer(correct_spell(apply_stemmer(remove_stopwords(clean_text(complaints)))))
+non_complaints = apply_lemmatizer(correct_spell(apply_stemmer(remove_stopwords(clean_text(non_complaints)))))
 
 # vectorize the lists
 complaints_count = vectorizer.transform(complaints)

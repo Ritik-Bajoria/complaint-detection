@@ -8,6 +8,7 @@ import spacy
 from spacy.cli import download
 from nltk.corpus import stopwords
 from nltk.data import find
+from sklearn.model_selection import train_test_split 
 
 # Load the existing model and vectorizer
 model = load("./MultinomialNB_BOW_model.joblib")
@@ -45,7 +46,7 @@ except LookupError:
     nltk.download('stopwords')
 
 # Load the dataset to be used 
-data = pd.read_csv('C:/Users/Legion/Ritik/Desktop/Programming/Intern work/07-Intern/complaint detector/Database/mydata.csv')
+data = pd.read_csv('Database/newdata.csv')
 
 # Preprocess the text data to numerical data
 data['label'] = data['label'].map({'complaint': 1, 'non-complaint': 0})
@@ -119,12 +120,26 @@ data[text_column] = data[text_column].apply(apply_lemmatizer)
 data["pos_column"] = data[text_column].apply(pos_tagging)
 # print("pos tagged\t\t\t",data["pos_column"][200])
 
+# splitting data for training and for testing  in 8:2 ratio
+X_train, X_test, y_train, y_test = train_test_split(data[text_column], data['label'], test_size=0.2, random_state=42)
+
 # vectorize the dataset
-text_series_fit_count = vectorizer.fit_transform(data[text_column])
+X_train_count = vectorizer.fit_transform(X_train.values)
 
 # retrain the model
-model.fit(text_series_fit_count, data["label"])
+model.fit(X_train_count, y_train)
 
 print("updating model..")
 dump(model, "./MultinomialNB_BOW_model.joblib")
-print("model updated")
+print("model updated\n")
+print("updating vectorizer..")
+dump(vectorizer,"./count_vectorizer.joblib")
+print("vectorizer updated")
+
+# Predict
+# testing the model
+X_test_count = vectorizer.transform(X_test)
+y_pred = model.predict(X_test_count)
+
+# show testing results
+print(classification_report(y_test,y_pred))

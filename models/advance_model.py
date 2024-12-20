@@ -124,7 +124,7 @@ data["pos_column"] = data[text_column].apply(pos_tagging)
 X_train, X_test, y_train, y_test = train_test_split(data[text_column], data['label'], test_size=0.2, random_state=10)
 
 # initialize vectorizer
-vectorizer = CountVectorizer()
+vectorizer = CountVectorizer(ngram_range=(1,3))
 # fit the vectorizer to the training data and transform training data
 X_train_count = vectorizer.fit_transform(X_train.values)
 
@@ -138,8 +138,6 @@ dump(model,"MultinomialNB_BOW_model.joblib")
 dump(vectorizer, "count_vectorizer.joblib")
 
 # testing the model
-print("type", type(X_test))
-print(X_test)
 X_test_count = vectorizer.transform(X_test)
 y_pred = model.predict(X_test_count)
 
