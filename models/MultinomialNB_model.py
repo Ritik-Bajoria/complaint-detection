@@ -2,6 +2,8 @@ import pandas as pd
 import re
 import spacy
 from spacy.cli import download
+import numpy as np
+import matplotlib.pyplot as plt
 import nltk
 from nltk.corpus import stopwords
 from nltk.data import find
@@ -10,7 +12,7 @@ from autocorrect import Speller
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, accuracy_score
 from sklearn.pipeline import Pipeline
 from joblib import dump
 
@@ -124,7 +126,7 @@ data["pos_column"] = X_train.apply(pos_tagging)
 # print("pos tagged\t\t\t",data["pos_column"][200])
 
 # initialize vectorizer
-vectorizer = CountVectorizer(ngram_range=(1,3))
+vectorizer = CountVectorizer(ngram_range=(1,1))
 # fit the vectorizer to the training data and transform training data
 X_train_count = vectorizer.fit_transform(X_train.values)
 
@@ -136,6 +138,8 @@ model.fit(X_train_count, y_train)
 # saving the model and vectorizer 
 dump(model,"MultinomialNB_BOW_model.joblib")
 dump(vectorizer, "count_vectorizer.joblib")
+print(len(vectorizer.get_feature_names_out()))
+print(vectorizer.get_stop_words())
 
 # testing the model
 X_test_count = vectorizer.transform(X_test)

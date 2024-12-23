@@ -162,16 +162,10 @@ non_complaints = [
 # vectorize the lists
 complaints_count = vectorizer.transform(complaints)
 non_complaints_count = vectorizer.transform(non_complaints)
-print(complaints_count)
-rows, cols = complaints_count.nonzero()
-for i in range(len(rows)):
-    print(f"Row: {rows[i]}, Column: {vectorizer.get_feature_names_out()[cols[i]]}")
-# make predictions for the lists
-complaint_predictions = model.predict(complaints_count)
-non_complaint_predictions = model.predict(non_complaints_count)
 
+# print predictions probability
+print(model.predict_proba(complaints_count))
+print(model.predict_proba(non_complaints_count))
 # print the predictions 
-for prediction in complaint_predictions:
-    print("complaint" if prediction == 1 else "non_complaint")  
-for prediction in non_complaint_predictions:
-    print("complaint" if prediction == 1 else "non_complaint")
+print(model.predict(complaints_count))
+print(model.predict(non_complaints_count))
