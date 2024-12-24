@@ -100,8 +100,10 @@ def apply_lemmatizer(text):
 def pos_tagging(text):
     if isinstance(text, str):
         doc = nlp(text)
-        pos_tags = [f"{token} {spacy.explain(token.pos_)}" for token in doc if token.pos_ not in ["SPACE","X","PUNCT"]]
-        return ' | '.join(pos_tags)
+        # pos_tags = [f"{token} {spacy.explain(token.pos_)}" for token in doc if token.pos_ not in ["SPACE","X","PUNCT"]]
+        removed_unnecessary_text = [token.text for token in doc if spacy.explain(token.pos_) not in ["noun","proper noun", "pronoun", "numeral"]]
+        print("||".join([f"{token.text} {spacy.explain(token.pos_)}" for token in doc if spacy.explain(token.pos_) not in ["noun","proper noun", "pronoun", "numeral"]]))
+        return ' '.join(removed_unnecessary_text)
     return text
 
 # split data for training and testing
@@ -109,6 +111,7 @@ X_train, X_test, y_train, y_test = train_test_split(data[text_column], data['lab
 
 # print("original sentence\t\t",X_train)
 # Apply pre-processing functions to the text column
+X_train = X_train.apply(pos_tagging)
 X_train = X_train.apply(clean_text)
 # print("cleaned text\t\t",X_train)
 X_train = X_train.apply(remove_stopwords)
@@ -118,12 +121,12 @@ X_train = X_train.apply(apply_stemmer)
 X_train = X_train.apply(correct_spell)
 # print("spell corrected\t\t\t",X_train)
 X_train = X_train.apply(apply_lemmatizer)
-# print("words lemmatized\t\t",X_train)
+print("words lemmatized\t\t",X_train)
 
 # create a new column in the dataframe to hold POS (Part of Speech) taggings 
 # for each word in format {word} {POS Tag} | {word} {POS Tag}
 data["pos_column"] = X_train.apply(pos_tagging)
-# print("pos tagged\t\t\t",data["pos_column"][200])
+print("pos tagged\t\t\t",data["pos_column"][10])
 
 # initialize vectorizer
 vectorizer = CountVectorizer(ngram_range=(1,1))
