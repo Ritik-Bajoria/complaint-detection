@@ -70,6 +70,11 @@ def complaint_detector():
         # load text to a variable
         text = request.form['text']
 
+        if not text:
+            return jsonify({
+                "error": True,
+                'message': 'No text in the request'
+                }), 400
         # preprocess text
         text = clean_text(text)
         text = remove_stopwords(text)
@@ -78,10 +83,11 @@ def complaint_detector():
         text = apply_lemmatizer(text)
 
         # classify as complaint or non-complaint
-        classification = classify(text)
-
+        classification, probability = classify(text)
+        
         return jsonify({
-            "classification":classification
+            "classification":classification,
+            "confidence":probability*100
         }), 200
 
     except Exception as e:
