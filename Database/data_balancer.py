@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.utils import resample
 
 
-df = pd.read_csv('C:/Users/Legion/Ritik/Desktop/Programming/Intern work/07-Intern/complaint detector/Database/mydata_imbalanced.csv')
+df = pd.read_csv('C:/Users/Legion/Ritik/Desktop/Programming/Intern work/07-Intern/complaint detector/Database/newdata.csv')
 # Assuming your dataset is in a DataFrame called 'df'
 # Separate the majority and minority classes
 complaint = df[df['label'] == 'complaint']

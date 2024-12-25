@@ -1,18 +1,20 @@
-from joblib import load, dump
 import pandas as pd
-import nltk
 import re
-from nltk.stem import PorterStemmer
-from autocorrect import Speller
 import spacy
 from spacy.cli import download
+import numpy as np
+import matplotlib.pyplot as plt
+import nltk
 from nltk.corpus import stopwords
 from nltk.data import find
-from sklearn.model_selection import train_test_split 
-
-# Load the existing model and vectorizer
-model = load("./SVM_BOW_model.joblib")
-vectorizer = load("./SVM_count_vectorizer.joblib")
+from nltk.stem import PorterStemmer
+from autocorrect import Speller
+from sklearn.svm import OneClassSVM
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, accuracy_score
+from sklearn.pipeline import Pipeline
+from joblib import dump
 
 # Create an instance of the Porterstemmer
 stemmer = PorterStemmer()
@@ -29,7 +31,6 @@ try:
     nlp = spacy.load("en_core_web_sm")
 except OSError:
     print("Downloading en_core_web_sm...")
-    
     download("en_core_web_sm")
     nlp = spacy.load("en_core_web_sm")
 
@@ -47,10 +48,10 @@ except LookupError:
     nltk.download('stopwords')
 
 # Load the dataset to be used 
-data = pd.read_csv('Database/newdata.csv')
-
+data = pd.read_csv('C:/Users/Legion/Ritik/Desktop/Programming/Intern work/07-Intern/complaint detector/Database/english-complaints.csv')
+print(data['label'].value_counts())
 # Preprocess the text data to numerical data
-data['label'] = data['label'].map({'complaint': 1, 'non-complaint': 0})
+data['label'] = data['label'].map({'complaint': 1, 'non-complaint': -1})
 
 # Identify text column
 text_column = 'text' 
@@ -99,47 +100,49 @@ def apply_lemmatizer(text):
 def pos_tagging(text):
     if isinstance(text, str):
         doc = nlp(text)
-        pos_tags = [f"{token} {spacy.explain(token.pos_)}" for token in doc if token.pos_ not in ["SPACE","X","PUNCT"]]
-        return ' | '.join(pos_tags)
+        # pos_tags = [f"{token} {spacy.explain(token.pos_)}" for token in doc if token.pos_ not in ["SPACE","X","PUNCT"]]
+        removed_unnecessary_text = [token.text for token in doc if spacy.explain(token.pos_) not in ["noun","proper noun", "pronoun", "numeral"]]
+        # print("||".join([f"{token.text} {spacy.explain(token.pos_)}" for token in doc if spacy.explain(token.pos_) not in ["noun","proper noun", "pronoun", "numeral"]]))
+        return ' '.join(removed_unnecessary_text)
     return text
-    
-# testing using lists
-complaints = [
-    "Internet speed is too slow during peak hours.",
-    "Frequent disconnections are making it impossible to work.",
-    "Customer support is not responding to my issues.",
-    "Router frequently stops working and needs to be reset.",
-    "Billing errors are frustrating and not resolved on time.",
-    "I am not getting the promised internet speed.",
-    "The connection drops whenever there is bad weather.",
-    "It takes too long for technicians to come for repairs.",
-    "Worldlink app is not user-friendly and keeps crashing.",
-    "The WiFi coverage in my home is very poor."
-]
-non_complaints = [
-    "Worldlink provides stable internet most of the time.",
-    "Their unlimited data plans are very useful for streaming.",
-    "I appreciate the quick installation process.",
-    "Customer service representatives are polite and helpful.",
-    "The mobile app is convenient for paying bills.",
-    "The connection is reliable for online classes and meetings.",
-    "I like their frequent promotional offers for customers.",
-    "The new mesh WiFi system has improved coverage in my home.",
-    "They quickly resolved my query about upgrading my plan.",
-    "The internet speed is great for gaming and streaming."
-]
 
-# pre-process the lists
-# complaints = apply_lemmatizer(correct_spell(apply_stemmer(remove_stopwords(clean_text(complaints)))))
-# non_complaints = apply_lemmatizer(correct_spell(apply_stemmer(remove_stopwords(clean_text(non_complaints)))))
+# split data for training and testing
+X_train, X_test, y_train, y_test = train_test_split(data[text_column], data['label'], test_size=0.2, random_state=10)
 
-# vectorize the lists
-complaints_count = vectorizer.transform(complaints)
-non_complaints_count = vectorizer.transform(non_complaints)
+# print("original sentence\t\t",X_train)
+# Apply pre-processing functions to the text column
+X_train = X_train.apply(pos_tagging)
+X_train = X_train.apply(clean_text)
+# print("cleaned text\t\t",X_train)
+X_train = X_train.apply(remove_stopwords)
+# print("stopwords removed\t\t",X_train)
+X_train = X_train.apply(apply_stemmer)
+# print("words stemmed\t\t\t",X_train)
+X_train = X_train.apply(correct_spell)
+# print("spell corrected\t\t\t",X_train)
+X_train = X_train.apply(apply_lemmatizer)
+# print("words lemmatized\t\t",X_train)
 
-# make predictions for the lists
-complaint_predictions = model.predict(complaints_count)
-non_complaint_predictions = model.predict(non_complaints_count)
+# create a new column in the dataframe to hold POS (Part of Speech) taggings 
+# for each word in format {word} {POS Tag} | {word} {POS Tag}
+data["pos_column"] = X_train.apply(pos_tagging)
+# print("pos tagged\t\t\t",data["pos_column"][10])
 
-print(complaint_predictions)
-print(non_complaint_predictions)
+# initialize vectorizer
+vectorizer = CountVectorizer(ngram_range=(1,1))
+# fit the vectorizer to the training data and transform training data
+X_train_count = vectorizer.fit_transform(X_train.values)
+
+# Train a One-Class SVM model (outlier detection)
+model = OneClassSVM(kernel='linear', nu=0.1)  # nu is the outlier proportion parameter
+model.fit(X_train_count)
+# saving the model and vectorizer 
+dump(model,"SVM_BOW_model.joblib")
+dump(vectorizer, "SVM_count_vectorizer.joblib")
+
+# testing the model
+X_test_count = vectorizer.transform(X_test)
+y_pred = model.predict(X_test_count)
+
+# show testing results
+print(classification_report(y_test,y_pred))

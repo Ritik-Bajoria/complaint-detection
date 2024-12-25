@@ -83,11 +83,10 @@ def complaint_detector():
         text = apply_lemmatizer(text)
 
         # classify as complaint or non-complaint
-        classification, probability = classify(text)
+        classification = classify(text)
         
         return jsonify({
-            "classification":classification,
-            "confidence":probability*100
+            "classification":classification
         }), 200
 
     except Exception as e:
